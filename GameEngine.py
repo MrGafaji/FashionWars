@@ -11,6 +11,7 @@ class Engine():
             self.state = sqState.empty
         def setState(self, state:sqState):
             self.state = state
+       
         
 
     def __init__(self) -> None:
@@ -46,6 +47,12 @@ class Engine():
         for i in [0,1,self.x,self.x+1]:
             self.board1D[i].setState(sqState.P1)
             self.board1D[self.arraylength-1-i].setState(sqState.P2)
+
+    def setAlmostFinishedState(self):
+        self.setStartingState()
+        for row in self.board2D:
+            for cell in range(len(row)-2):
+                row[cell].setState(sqState.P1)
 
 
     def setCellState(self, ix, state):
@@ -112,6 +119,55 @@ class Engine():
             if self.getCellState2D(nx,ny) == otherTeam(team):
                 self.setCellState(convertCoordinates1D(nx,ny),team)
             # print(n)
+
+    def gameFinished(self):
+        p1, p2 = self.getScores()
+        if p1 == 0:
+            print("P1 Won")
+            return True
+        if p2 == 0:
+            print("P2 Won")
+            return True
+        
+        team1HasMove = self.checkTeamHasLegalMove(sqState.P1)
+        team2HasMove = self.checkTeamHasLegalMove(sqState.P2)
+        if not team1HasMove:
+            print("P1 has no legal moves")
+            return True
+        if not team2HasMove:
+            print("P2 has no legal moves")
+            return True
+
+        fullBoard = self.checkFullBoard()
+        print(f"{fullBoard = }, {team1HasMove = }, {team2HasMove = }")
+
+
+
+
+    def checkTeamHasLegalMove(self, team):
+        board = self.board1D
+        x, y= settings["board_size"]
+        for j in range(y):
+            for i in range(x):
+                if self.getCellState2D(i,j) == team:
+                    if len(self.findLegalMoves(i,j)) > 0 or len(self.findLegalJumps(i,j)) > 0:
+                        return True
+        return False
+        
+    def checkFullBoard(self):
+        for ix in range(len(self.board1D)):
+            if self.getCellState(ix) == sqState.empty:
+                return False
+        return True
+    
+    def getScores(self):
+        p1 = 0
+        p2 = 0
+        for cell in self.board1D:
+            if cell.state == sqState.P1: p1 += 1
+            if cell.state == sqState.P2: p2 += 1
+        return p1, p2
+                
 
 
     def print1D(self):

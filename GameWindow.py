@@ -7,6 +7,8 @@ from GameEngine import Engine, sqState
 from settings import settings
 from utils import *
 from Stack import Stack
+from WonWidget import WonWidget
+from startMenu import startWidget
 
 
 
@@ -25,17 +27,30 @@ class BoardWidget(QWidget):
         self.stage = stage.SelectFrom
         self.playfrom = None
         self.possibleMoves = []
+        self.history = Stack()
+        if startWidget().exec_():
+            self.secondPlayer = player.human
+        else:
+            self.secondPlayer = player.computer
+
+
+    def resetGame(self):
+        self.engine = Engine()
+        self.engine.setStartingState()
+        self.updateBoardState()
 
     def checkFinished(self):
-        # if self.engine.GameFinished():
-        raise NotImplementedError()
+        if self.engine.gameFinished():
+            if WonWidget("p1").exec_():
+                self.resetGame()
+        # raise NotImplementedError()
 
     def nextTurn(self):
-        # self.checkFinished()
         if self.currentTeam == sqState.P1:
             self.currentTeam = sqState.P2
         else:
             self.currentTeam = sqState.P1
+
             
         
     def clickedInGame(self,ixBtn):
@@ -53,6 +68,8 @@ class BoardWidget(QWidget):
             self.possibleMoves = []
             self.stage = stage.SelectFrom
             print(f"Wrong turn!")
+
+        self.checkFinished()
             
 
  

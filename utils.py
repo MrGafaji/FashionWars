@@ -5,6 +5,9 @@ class sqState(Enum):
     empty= 0
     P1=1
     P2=2
+class player(Enum):
+    human = 0
+    computer = 1
 
 class stage(Enum):
     SelectFrom = 0
