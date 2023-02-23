@@ -105,6 +105,9 @@ class Engine():
         self.board1D[mTo].setState(team)
         x, y = convertCoordinates2D(mTo)
         neighbours = self.findNeighbours(x,y)
+        if convertCoordinates2D(mFrom) not in self.findNeighbours(x,y):
+            print(f"{self.findNeighbours(x,y) = }{mFrom = }")
+            self.setCellState(mFrom, sqState.empty)
         for nx, ny in neighbours:
             if self.getCellState2D(nx,ny) == otherTeam(team):
                 self.setCellState(convertCoordinates1D(nx,ny),team)
