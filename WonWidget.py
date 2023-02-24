@@ -20,7 +20,7 @@ class WonWidget(QDialog):
         self.setFixedSize(300,200)
 
 
-        label = QLabel(f"Player {winner} has won!" )
+        label = QLabel(f"Player {winner.name} has won!" )
         label.setStyleSheet("font-size: 30px; font-weight:bold;")
         self.layout.addWidget(label)
 

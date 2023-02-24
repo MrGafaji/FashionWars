@@ -1,6 +1,5 @@
 
 
-from settings import settings
 from utils import *
 from GameEngine import Engine
 

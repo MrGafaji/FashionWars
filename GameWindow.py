@@ -1,12 +1,9 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QMenuBar, QMenu, QGridLayout, QWidget, QSizePolicy, QPushButton, QVBoxLayout, QHBoxLayout, QAction, QTabWidget, QTabBar, QScrollArea
-from PyQt5.QtGui import QFont, QIcon, QTextCursor
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, QHBoxLayout, QWidget, QPushButton
 from Square import Square
 from GameEngine import Engine
 from settings import settings
 from utils import *
-from Stack import Stack
 from WonWidget import WonWidget
 from startMenu import startWidget
 from Computer import Computer
@@ -16,9 +13,11 @@ from Computer import Computer
 
 
 class BoardWidget(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, changeTurnUiAction, resetUiAction, parent=None):
         super().__init__(parent)
         self.grid = QGridLayout(self)
+        self.changeTurnUiAction = changeTurnUiAction
+        self.resetUiAction = resetUiAction
         self.grid.setContentsMargins(0,0,0,0)
         self.currentTeam = sqState.P1
         self.engine = Engine()
@@ -28,7 +27,6 @@ class BoardWidget(QWidget):
         self.stage = stage.SelectFrom
         self.playfrom = None
         self.possibleMoves = []
-        self.history = Stack()
         if startWidget().exec_():
             self.secondPlayer = player.human
         else:
@@ -41,6 +39,8 @@ class BoardWidget(QWidget):
         self.engine.setStartingState()
         self.updateBoardState()
         self.currentTeam = sqState.P1
+        self.resetUiAction()
+
 
     def checkFinished(self):
         if self.engine.gameFinished():
@@ -50,6 +50,8 @@ class BoardWidget(QWidget):
     def nextTurn(self):
         if self.currentTeam == sqState.P1:
             self.currentTeam = sqState.P2
+            self.changeTurnUiAction()
+
             if self.secondPlayer == player.computer and self.engine.checkTeamHasLegalMove(sqState.P2):
                 mFrom, mTo = self.computer.play(self.engine.getBoardState())
                 self.engine.makeMove(sqState.P2, mFrom, mTo)
@@ -57,11 +59,13 @@ class BoardWidget(QWidget):
                 
                 self.board1D[mFrom].paintGreen()
                 self.board1D[mTo].paintBlue()
-                self.checkFinished()
                 self.currentTeam = sqState.P1
+                self.changeTurnUiAction()
                 
+            self.checkFinished()
         else:
             self.currentTeam = sqState.P1
+            self.changeTurnUiAction()
 
             
         
@@ -137,18 +141,73 @@ class BoardWidget(QWidget):
     def squareClicked(self, index):
         pass
 
-    def test(self):
-        print("hoi")
+    def Undo(self):
+        if not self.engine.history.isEmpty():
+            self.engine.undoLastMove()
+            self.currentTeam = otherTeam(self.currentTeam)
+            # self.repaintBoard()
+            if self.secondPlayer == player.computer:
+                self.engine.undoLastMove()
+                self.currentTeam = otherTeam(self.currentTeam)
+            self.updateBoardState()
+            self.repaintBoard()
+        else: 
+            print("Can't go back!")
+
+    def redo(self):
+        if not self.engine.future.isEmpty():
+            self.engine.redoLastMove()
+            self.currentTeam = otherTeam(self.currentTeam)
+            # self.repaintBoard()
+            if self.secondPlayer == player.computer:
+                self.engine.redoLastMove()
+            self.updateBoardState()
+            self.repaintBoard()
+        else: 
+            print("Can't go forward!")
+
 
 class GameWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)  
         self.layout = QGridLayout(self)
-        self.Board = BoardWidget()
-        self.layout.addWidget(self.Board,0,0)
-        btn = QPushButton("klick")
-        btn.clicked.connect(self.Board.test)
-        self.layout.addWidget(btn,1,0)
+        self.Board = BoardWidget(self.changeTurnUi, self.resetUi)
+        self.layout.addWidget(self.Board,0,1,2,2)
+
+        undo = QPushButton("↰")
+        undo.clicked.connect(self.Board.Undo)
+        # undo.setFixedSize(50,50)
+        redo = QPushButton("⮡")
+        redo.clicked.connect(self.Board.redo)
+        # redo.setFixedSize(50,50)
+        self.layout.addWidget(undo, 2, 1)
+        # self.layout.addWidget(redo, 2, 2)
+
+        # make player icons 
+        self.turn = True
+        self.p1 = Square(lambda x:None, 0)
+        self.p1.setState(sqState.P1)
+        self.p2 = Square(lambda x:None, 0)
+        self.p2.setState(sqState.P2)
+        self.layout.addWidget(self.p1, 0, 0)
+        self.layout.addWidget(self.p2, 1, 3)
+        self.changeTurnUi()
+
+    def changeTurnUi(self):
+        if self.turn:
+            self.p1.paintGreen()
+            self.p2.repaint()
+            self.turn = not self.turn
+        else:
+            self.p2.paintGreen()
+            self.p1.repaint()
+            self.turn = not self.turn
+
+    def resetUi(self):
+        self.turn = True
+        self.changeTurnUi()
+        
+
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):

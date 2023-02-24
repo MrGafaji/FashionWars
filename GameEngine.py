@@ -1,5 +1,6 @@
 from settings import settings
 from utils import *
+from Stack import Stack
 
 
 
@@ -21,7 +22,10 @@ class Engine():
         self.board1D = [None for i in range(self.arraylength)]
         self.board2D = [[None for i in range(self.x)] for j in range(self.y)]
         self.winner = None
-        self.populateCells()
+        self.populateCells()        
+        self.history = Stack()
+        self.future = Stack()
+
 
     def getCellState(self, ix):
         return self.board1D[ix].state
@@ -58,7 +62,6 @@ class Engine():
         for row in self.board2D:
             for cell in range(len(row)-2):
                 row[cell].setState(sqState.P1)
-
 
     def setCellState(self, ix, state):
         self.board1D[ix].setState(state)
@@ -113,7 +116,20 @@ class Engine():
         # print(f"legalJumps: {[(i,j) for i,j in self.findJumpNeighbours(x,y) if self.getCellState2D(i,j) == sqState.empty]}")
         return [(i,j) for i,j in self.findJumpNeighbours(x,y) if self.getCellState2D(i,j) == sqState.empty]
     
+    def undoLastMove(self):
+        if not self.history.isEmpty():
+            currentState = self.history.pop()
+            self.setBoardState(currentState)
+            self.future.push(currentState)
+    def redoLastMove(self):
+        print("redo")
+        if not self.future.isEmpty():
+            currentState = self.future.pop()
+            self.setBoardState(currentState)
+            self.history.push(currentState)
+    
     def makeMove(self, team, mFrom, mTo):
+        self.history.push(self.getBoardState())
         self.board1D[mTo].setState(team)
         x, y = convertCoordinates2D(mTo)
         neighbours = self.findNeighbours(x,y)
@@ -124,6 +140,8 @@ class Engine():
             if self.getCellState2D(nx,ny) == otherTeam(team):
                 self.setCellState(convertCoordinates1D(nx,ny),team)
             # print(n)
+        self.future = Stack()
+        self.gameFinished()
 
     def gameFinished(self):
         p1, p2 = self.getScores()
@@ -139,6 +157,8 @@ class Engine():
         fullBoard = self.checkFullBoard()
         team1HasMove = self.checkTeamHasLegalMove(sqState.P1)
         team2HasMove = self.checkTeamHasLegalMove(sqState.P2)
+        p1, p2 = self.getScores()
+        self.determineWinner()
         if fullBoard:
             return True
         if not team1HasMove:
@@ -151,7 +171,12 @@ class Engine():
         # print(f"{fullBoard = }, {team1HasMove = }, {team2HasMove = }")
 
 
-
+    def determineWinner(self):
+        p1, p2 = self.getScores()
+        if p1 > p2:
+            self.winner = sqState.P1
+        else:
+            self.winner = sqState.P2
 
     def checkTeamHasLegalMove(self, team):
         board = self.board1D
