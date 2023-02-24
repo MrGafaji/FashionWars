@@ -1,10 +1,10 @@
 import unittest
-from GameEngine import Engine , sqState
-from settings import settings
+from GameMachine import Machine , sqState
+from instellingen import instellingen
 
 class EngineTest(unittest.TestCase):
     def testboardAxess(self):
-        engine = Engine()
+        engine = Machine()
         # engine.setStartingState()
         engine.print2D()
         engine.print1D()

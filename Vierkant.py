@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QPushButton, QApplication
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtCore import QSize
-from settings import settings
+from instellingen import instellingen
 import sys
 
 class Square(QPushButton):
@@ -17,8 +17,8 @@ class Square(QPushButton):
     def setupUI(self):
         self.icons = [QIcon(),QIcon("icons/icons8-hoodie-blue.png"),QIcon("icons/icons8-hoodie-red.png")]
         self.setIcon(self.icons[0])
-        self.setIconSize(QSize(settings["icon_size"],settings["icon_size"]))
-        self.setFixedSize(settings["btn_size"],settings["btn_size"])
+        self.setIconSize(QSize(instellingen["icon_size"],instellingen["icon_size"]))
+        self.setFixedSize(instellingen["btn_size"],instellingen["btn_size"])
 
 
     def setState(self, state = None):

@@ -1,4 +1,4 @@
-class Stack():
+class Stapel():
     class Node():
         def __init__(self, text):
             self.text = text
@@ -9,14 +9,14 @@ class Stack():
     def __init__(self):
         self._top = None
 
-    def push(self, item):
+    def duw(self, item):
         newNode = self.Node(item)
         newNode.setNext(self._top)
         self._top = newNode
         
 
-    def pop(self):
-        if self.isEmpty():
+    def trek(self):
+        if self.isLeeg():
             raise EmptyStackException()
         res = self._top.text
         self._top = self._top.next
@@ -24,13 +24,12 @@ class Stack():
 
 
     def top(self):
-        if self.isEmpty():
+        if self.isLeeg():
             return None
         return self._top.text
 
-    def isEmpty(self):
+    def isLeeg(self):
         return self._top is None
 
 class EmptyStackException(Exception):
-    """raised when trying to pop from empty stack"""
     pass

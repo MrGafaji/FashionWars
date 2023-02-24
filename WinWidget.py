@@ -2,17 +2,17 @@ import sys
 from PyQt5.QtWidgets import QApplication, QLabel, QDialog, QMainWindow, QMenuBar, QMenu, QGridLayout, QWidget, QSizePolicy, QPushButton, QVBoxLayout, QHBoxLayout, QAction, QTabWidget, QTabBar, QScrollArea
 from PyQt5.QtGui import QFont, QIcon, QTextCursor
 from PyQt5.QtCore import Qt
-from Square import Square
-from GameEngine import Engine, sqState
-from settings import settings
-from utils import *
-from Stack import Stack
+from Vierkant import Square
+from GameMachine import Machine, sqState
+from instellingen import instellingen
+from bruikbaarheden import *
+from stapel import Stapel
 
 
 
 
 
-class WonWidget(QDialog):
+class GewonnenWidget(QDialog):
     def __init__(self, winner, parent=None):
         super().__init__(parent)
         self.layout = QVBoxLayout(self)

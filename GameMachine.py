@@ -1,14 +1,14 @@
-from settings import settings
-from utils import *
-from Stack import Stack
+from instellingen import instellingen
+from bruikbaarheden import *
+from stapel import Stapel
 
 
 
-class Engine():
+class Machine():
     class Cell():
         def __init__(self):
             self.state = sqState.empty
-        def setEmpty(self):
+        def setLeeg(self):
             self.state = sqState.empty
         def setState(self, state:sqState):
             self.state = state
@@ -16,57 +16,57 @@ class Engine():
         
 
     def __init__(self) -> None:
-        self.x, self.y = settings["board_size"]
+        self.x, self.y = instellingen["board_size"]
         self.arraylength = self.x * self.y
         # print(self.arraylength)
-        self.board1D = [None for i in range(self.arraylength)]
+        self.bord1D = [None for i in range(self.arraylength)]
         self.board2D = [[None for i in range(self.x)] for j in range(self.y)]
         self.winner = None
-        self.populateCells()        
-        self.history = Stack()
-        self.future = Stack()
+        self.populeerCellen()        
+        self.geschiedenis = Stapel()
+        self.toekomst = Stapel()
 
 
     def getCellState(self, ix):
-        return self.board1D[ix].state
+        return self.bord1D[ix].state
 
     def getCellState2D(self, x,y):
         return self.board2D[y][x].state
 
-    def getBoardState(self):
-        return [cell.state for cell in self.board1D]
+    def getBordState(self):
+        return [cell.state for cell in self.bord1D]
     
-    def setBoardState(self, state):
-        for ix in range(len(self.board1D)):
-            self.board1D[ix].setState(state[ix])
+    def zetOpHetBord(self, state):
+        for ix in range(len(self.bord1D)):
+            self.bord1D[ix].setState(state[ix])
     
-    def populateCells(self):
+    def populeerCellen(self):
         for j in range(self.y):
             for i in range(self.x):
                 cell = self.Cell()
-                self.board1D[(j*self.x) + i] = cell
+                self.bord1D[(j*self.x) + i] = cell
                 self.board2D[j][i] = cell
     
-    def setEmptyState(self):
-        for cell in self.board1D:
-            cell.setEmpty()
+    def setLeegState(self):
+        for cell in self.bord1D:
+            cell.setLeeg()
            
-    def setStartingState(self):
-        self.setEmptyState()
+    def setStartState(self):
+        self.setLeegState()
         for i in [0,1,self.x,self.x+1]:
-            self.board1D[i].setState(sqState.P1)
-            self.board1D[self.arraylength-1-i].setState(sqState.P2)
+            self.bord1D[i].setState(sqState.P1)
+            self.bord1D[self.arraylength-1-i].setState(sqState.P2)
 
-    def setAlmostFinishedState(self):
-        self.setStartingState()
+    def setBijnaKlaarState(self):
+        self.setStartState()
         for row in self.board2D:
             for cell in range(len(row)-2):
                 row[cell].setState(sqState.P1)
 
     def setCellState(self, ix, state):
-        self.board1D[ix].setState(state)
+        self.bord1D[ix].setState(state)
 
-    def findNeighbours(self, x, y):
+    def vindBuren(self, x, y):
         if x < 0 and x >= self.x and y < 0 and y >= self.y:
             raise indexOutOfBoundException()
         res = []
@@ -80,7 +80,7 @@ class Engine():
 
         return res
     
-    def findJumpNeighbours(self, x, y):
+    def vindSpringBuren(self, x, y):
         if x < 0 and x >= self.x and y < 0 and y >= self.y:
             raise indexOutOfBoundException()
         difs = [(-2,-2),(0,-2),(+2,-2),(-2,0),(2,0),(-2,2),(0,2),(2,2)] 
@@ -94,7 +94,7 @@ class Engine():
         return res
     
     
-    def findMySquares(self, team: sqState):
+    def vindMijnVierkanten(self, team: sqState):
         res = []
         for i in range(self.x):
             for j in range(self.y):
@@ -103,47 +103,47 @@ class Engine():
         return res
 
 
-    def findLegalWalks(self, x, y):
+    def vindLegaleLoopjes(self, x, y):
         if self.board2D[y][x].state == sqState.empty:
             raise Exception("Cannot make move from empty square!")
 
-        return [(i,j) for i,j in self.findNeighbours(x,y) if self.getCellState2D(i,j) == sqState.empty]
+        return [(i,j) for i,j in self.vindBuren(x,y) if self.getCellState2D(i,j) == sqState.empty]
 
-    def findLegalJumps(self, x, y):
+    def vindLegaleSprongen(self, x, y):
         if self.board2D[y][x].state == sqState.empty:
             raise Exception("Cannot make move from empty square!")
 
         # print(f"legalJumps: {[(i,j) for i,j in self.findJumpNeighbours(x,y) if self.getCellState2D(i,j) == sqState.empty]}")
-        return [(i,j) for i,j in self.findJumpNeighbours(x,y) if self.getCellState2D(i,j) == sqState.empty]
+        return [(i,j) for i,j in self.vindSpringBuren(x,y) if self.getCellState2D(i,j) == sqState.empty]
     
-    def undoLastMove(self):
-        if not self.history.isEmpty():
-            currentState = self.history.pop()
-            self.setBoardState(currentState)
-            self.future.push(currentState)
-    def redoLastMove(self):
+    def neemZetTerug(self):
+        if not self.geschiedenis.isLeeg():
+            huidigeState = self.geschiedenis.trek()
+            self.zetOpHetBord(huidigeState)
+            self.toekomst.duw(huidigeState)
+    def doZetWeer(self):
         print("redo")
-        if not self.future.isEmpty():
-            currentState = self.future.pop()
-            self.setBoardState(currentState)
-            self.history.push(currentState)
+        if not self.toekomst.isLeeg():
+            huidigeState = self.toekomst.trek()
+            self.zetOpHetBord(huidigeState)
+            self.geschiedenis.duw(huidigeState)
     
-    def makeMove(self, team, mFrom, mTo):
-        self.history.push(self.getBoardState())
-        self.board1D[mTo].setState(team)
-        x, y = convertCoordinates2D(mTo)
-        neighbours = self.findNeighbours(x,y)
-        if convertCoordinates2D(mFrom) not in self.findNeighbours(x,y):
+    def doeZet(self, team, mVan, mNaar):
+        self.geschiedenis.duw(self.getBordState())
+        self.bord1D[mNaar].setState(team)
+        x, y = converteerCoordinaten2D(mNaar)
+        buren = self.vindBuren(x,y)
+        if converteerCoordinaten2D(mVan) not in self.vindBuren(x,y):
             # print(f"{self.findNeighbours(x,y) = }{mFrom = }")
-            self.setCellState(mFrom, sqState.empty)
-        for nx, ny in neighbours:
-            if self.getCellState2D(nx,ny) == otherTeam(team):
-                self.setCellState(convertCoordinates1D(nx,ny),team)
+            self.setCellState(mVan, sqState.empty)
+        for nx, ny in buren:
+            if self.getCellState2D(nx,ny) == andereTeam(team):
+                self.setCellState(converteerCoordinaten1D(nx,ny),team)
             # print(n)
-        self.future = Stack()
-        self.gameFinished()
+        self.toekomst = Stapel()
+        self.spelAfgelopen()
 
-    def gameFinished(self):
+    def spelAfgelopen(self):
         p1, p2 = self.getScores()
         if p1 == 0:
             print("P1 Won")
@@ -154,12 +154,12 @@ class Engine():
             self.winner = sqState.P1
             return True
         
-        fullBoard = self.checkFullBoard()
-        team1HasMove = self.checkTeamHasLegalMove(sqState.P1)
-        team2HasMove = self.checkTeamHasLegalMove(sqState.P2)
+        volBord = self.checkVolBord()
+        team1HasMove = self.checkTeamHeeftLegaleZet(sqState.P1)
+        team2HasMove = self.checkTeamHeeftLegaleZet(sqState.P2)
         p1, p2 = self.getScores()
-        self.determineWinner()
-        if fullBoard:
+        self.telScores()
+        if volBord:
             return True
         if not team1HasMove:
             print("P1 has no legal moves")
@@ -171,25 +171,24 @@ class Engine():
         # print(f"{fullBoard = }, {team1HasMove = }, {team2HasMove = }")
 
 
-    def determineWinner(self):
+    def telScores(self):
         p1, p2 = self.getScores()
         if p1 > p2:
             self.winner = sqState.P1
         else:
             self.winner = sqState.P2
 
-    def checkTeamHasLegalMove(self, team):
-        board = self.board1D
-        x, y= settings["board_size"]
+    def checkTeamHeeftLegaleZet(self, team):
+        x, y= instellingen["board_size"]
         for j in range(y):
             for i in range(x):
                 if self.getCellState2D(i,j) == team:
-                    if len(self.findLegalWalks(i,j)) > 0 or len(self.findLegalJumps(i,j)) > 0:
+                    if len(self.vindLegaleLoopjes(i,j)) > 0 or len(self.vindLegaleSprongen(i,j)) > 0:
                         return True
         return False
         
-    def checkFullBoard(self):
-        for ix in range(len(self.board1D)):
+    def checkVolBord(self):
+        for ix in range(len(self.bord1D)):
             if self.getCellState(ix) == sqState.empty:
                 return False
         return True
@@ -197,7 +196,7 @@ class Engine():
     def getScores(self):
         p1 = 0
         p2 = 0
-        for cell in self.board1D:
+        for cell in self.bord1D:
             if cell.state == sqState.P1: p1 += 1
             if cell.state == sqState.P2: p2 += 1
         return p1, p2
@@ -207,7 +206,7 @@ class Engine():
     def print1D(self):
         print("board 1D")
         for row in range(self.y):
-            print([self.board1D[cell+(row*self.x)].state.value for cell in range(self.x)])
+            print([self.bord1D[cell+(row*self.x)].state.value for cell in range(self.x)])
 
 
     def print2D(self):

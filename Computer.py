@@ -1,90 +1,90 @@
 
 
-from utils import *
-from GameEngine import Engine
+from bruikbaarheden import *
+from GameMachine import Machine
 
 class Computer():
     def __init__(self, team):
         self.team = team
-        self.engine = Engine()
+        self.machine = Machine()
 
-    def countOvertakes(self, x,y):
+    def telOvernames(self, x,y):
         res = 0
-        for m,n in self.engine.findNeighbours(x,y):
-            if self.engine.getCellState2D(m,n) == otherTeam(self.team):
+        for m,n in self.machine.vindBuren(x,y):
+            if self.machine.getCellState2D(m,n) == andereTeam(self.team):
                 res += 1
         return res
         
 
 
-    def play(self, state):
+    def speel(self, state):
         print("bob is playing!")
-        self.engine.setBoardState(state)
+        self.machine.zetOpHetBord(state)
         # self.engine.print1D()
-        if not self.engine.checkTeamHasLegalMove(self.team):
-            raise Exception("I have no legal moves")
+        if not self.machine.checkTeamHeeftLegaleZet(self.team):
+            raise Exception("Ik heb geen zetten")
 
         ### determine computers squares
-        myCells = []
+        mijnCellen = []
         for i in range(len(state)):
             if state[i] == self.team:
-                myCells.append(i)
+                mijnCellen.append(i)
         # print(f"{myCells = }")
 
-        walk = self.findBestWalk(myCells)
-        jump = self.findBestJump(myCells)
-        print(f"{walk = }  ,  {jump = }")
+        loop = self.vindBesteLoop(mijnCellen)
+        spring = self.vindBesteSprong(mijnCellen)
+        print(f"{loop = }  ,  {spring = }")
 
-        if walk:
-            fx,fy,tx,ty = walk
-            return convertCoordinates1D(fx, fy), convertCoordinates1D(tx,ty)
+        if loop:
+            fx,fy,tx,ty = loop
+            return converteerCoordinaten1D(fx, fy), converteerCoordinaten1D(tx,ty)
 
 
-        if jump:
-            fx,fy,tx,ty = jump
-            return convertCoordinates1D(fx, fy), convertCoordinates1D(tx,ty)
+        if spring:
+            fx,fy,tx,ty = spring
+            return converteerCoordinaten1D(fx, fy), converteerCoordinaten1D(tx,ty)
         
-        raise Exception("I have no legal moves Bitch")
+        raise Exception("Ik heb ECHT geen legale zetten!!")
 
 
         # print(f"{fx = }, {fy = }, {tx = }, {ty = }")
 
 
-    def findBestWalk(self, myCells):
+    def vindBesteLoop(self, myCells):
         fx = None
-        numOvertakes = 0
+        numOvernames = 0
         for ix in myCells:
-            x, y = convertCoordinates2D(ix)
+            x, y = converteerCoordinaten2D(ix)
             ### finding Best Move
-            moves = self.engine.findLegalWalks(x,y)
+            zetten = self.machine.vindLegaleLoopjes(x,y)
 
             # print(f"{moves = } , {x = } , {y = }")
 
-            for a,b in moves:
-                if fx == None or self.countOvertakes(a,b) > numOvertakes:
+            for a,b in zetten:
+                if fx == None or self.telOvernames(a,b) > numOvernames:
                     fx, fy = x,y
                     tx, ty = a,b
-                    numOvertakes = self.countOvertakes(a,b)
+                    numOvernames = self.telOvernames(a,b)
 
         if fx == None:
             return
         return fx,fy,tx,ty
         
-    def findBestJump(self, myCells):
-        numOvertakes = 0
+    def vindBesteSprong(self, myCells):
+        numOvernames = 0
         fx = None
         for ix in myCells:
-            x, y = convertCoordinates2D(ix)
+            x, y = converteerCoordinaten2D(ix)
             ### finding Best Move
-            moves = self.engine.findLegalJumps(x,y)
+            zetten = self.machine.vindLegaleSprongen(x,y)
 
             # print(f"{moves = } , {x = } , {y = }")
 
-            for a,b in moves:
-                if fx == None or self.countOvertakes(a,b) > numOvertakes:
+            for a,b in zetten:
+                if fx == None or self.telOvernames(a,b) > numOvernames:
                     fx, fy = x,y
                     tx, ty = a,b
-                    numOvertakes = self.countOvertakes(a,b)
+                    numOvernames = self.telOvernames(a,b)
         if fx == None:
             return
         return fx,fy,tx,ty

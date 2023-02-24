@@ -1,4 +1,4 @@
-from settings import settings
+from instellingen import instellingen
 from enum import Enum
 
 class sqState(Enum):
@@ -9,22 +9,22 @@ class player(Enum):
     human = 0
     computer = 1
 
-class stage(Enum):
+class phase(Enum):
     SelectFrom = 0
     SelectTo = 1
 
 class indexOutOfBoundException(Exception):
     pass
 
-def convertCoordinates2D( xy):
-    width,_ = settings["board_size"]
-    return xy % width, xy // width
+def converteerCoordinaten2D( xy):
+    breedte,_ = instellingen["board_size"]
+    return xy % breedte, xy // breedte
 
-def convertCoordinates1D( x, y):
-    width,_ = settings["board_size"]
-    return y * width + x
+def converteerCoordinaten1D( x, y):
+    breedte,_ = instellingen["board_size"]
+    return y * breedte + x
 
-def otherTeam(team):
+def andereTeam(team):
     if team == sqState.P1:
         return sqState.P2
     elif team == sqState.P2:
