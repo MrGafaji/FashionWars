@@ -3,12 +3,13 @@ from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QMenuBar, QMenu, 
 from PyQt5.QtGui import QFont, QIcon, QTextCursor
 from PyQt5.QtCore import Qt
 from Square import Square
-from GameEngine import Engine, sqState
+from GameEngine import Engine
 from settings import settings
 from utils import *
 from Stack import Stack
 from WonWidget import WonWidget
 from startMenu import startWidget
+from Computer import Computer
 
 
 
@@ -32,22 +33,33 @@ class BoardWidget(QWidget):
             self.secondPlayer = player.human
         else:
             self.secondPlayer = player.computer
+            self.computer = Computer(sqState.P2)
 
 
     def resetGame(self):
         self.engine = Engine()
         self.engine.setStartingState()
         self.updateBoardState()
+        self.currentTeam = sqState.P1
 
     def checkFinished(self):
         if self.engine.gameFinished():
-            if WonWidget("p1").exec_():
+            if WonWidget(self.engine.winner).exec_():
                 self.resetGame()
-        # raise NotImplementedError()
 
     def nextTurn(self):
         if self.currentTeam == sqState.P1:
             self.currentTeam = sqState.P2
+            if self.secondPlayer == player.computer and self.engine.checkTeamHasLegalMove(sqState.P2):
+                mFrom, mTo = self.computer.play(self.engine.getBoardState())
+                self.engine.makeMove(sqState.P2, mFrom, mTo)
+                self.updateBoardState()
+                
+                self.board1D[mFrom].paintGreen()
+                self.board1D[mTo].paintBlue()
+                self.checkFinished()
+                self.currentTeam = sqState.P1
+                
         else:
             self.currentTeam = sqState.P1
 
@@ -60,9 +72,9 @@ class BoardWidget(QWidget):
 
         elif convertCoordinates2D(ixBtn) in self.possibleMoves and self.stage == stage.SelectTo:
             self.engine.makeMove(self.currentTeam, self.playfrom, ixBtn)
-            self.nextTurn()
             self.updateBoardState()
             self.stage = stage.SelectFrom
+            self.nextTurn()
 
         else:
             self.possibleMoves = []
@@ -79,7 +91,7 @@ class BoardWidget(QWidget):
         self.playfrom = self.board1D[ixBtn]
         self.playfrom.paintGreen()
         x,y = convertCoordinates2D(ixBtn)
-        self.possibleMoves = self.engine.findLegalMoves( x,y )
+        self.possibleMoves = self.engine.findLegalWalks( x,y )
         self.possibleMoves += self.engine.findLegalJumps( x,y )
 
         self.playfrom = ixBtn

@@ -20,6 +20,7 @@ class Engine():
         # print(self.arraylength)
         self.board1D = [None for i in range(self.arraylength)]
         self.board2D = [[None for i in range(self.x)] for j in range(self.y)]
+        self.winner = None
         self.populateCells()
 
     def getCellState(self, ix):
@@ -30,6 +31,10 @@ class Engine():
 
     def getBoardState(self):
         return [cell.state for cell in self.board1D]
+    
+    def setBoardState(self, state):
+        for ix in range(len(self.board1D)):
+            self.board1D[ix].setState(state[ix])
     
     def populateCells(self):
         for j in range(self.y):
@@ -83,7 +88,6 @@ class Engine():
             ny = y + dy
             if nx >= 0 and nx < self.x and ny >= 0 and ny < self.y:
                 res.append((nx,ny))
-
         return res
     
     
@@ -96,24 +100,25 @@ class Engine():
         return res
 
 
-    def findLegalMoves(self, x, y):
+    def findLegalWalks(self, x, y):
         if self.board2D[y][x].state == sqState.empty:
             raise Exception("Cannot make move from empty square!")
 
-        return [(i,j) for i,j in self.findNeighbours(x,y) if self.board2D[j][i].state == sqState.empty]
+        return [(i,j) for i,j in self.findNeighbours(x,y) if self.getCellState2D(i,j) == sqState.empty]
 
     def findLegalJumps(self, x, y):
         if self.board2D[y][x].state == sqState.empty:
             raise Exception("Cannot make move from empty square!")
 
-        return [(i,j) for i,j in self.findJumpNeighbours(x,y) if self.board2D[j][i].state == sqState.empty]
+        # print(f"legalJumps: {[(i,j) for i,j in self.findJumpNeighbours(x,y) if self.getCellState2D(i,j) == sqState.empty]}")
+        return [(i,j) for i,j in self.findJumpNeighbours(x,y) if self.getCellState2D(i,j) == sqState.empty]
     
     def makeMove(self, team, mFrom, mTo):
         self.board1D[mTo].setState(team)
         x, y = convertCoordinates2D(mTo)
         neighbours = self.findNeighbours(x,y)
         if convertCoordinates2D(mFrom) not in self.findNeighbours(x,y):
-            print(f"{self.findNeighbours(x,y) = }{mFrom = }")
+            # print(f"{self.findNeighbours(x,y) = }{mFrom = }")
             self.setCellState(mFrom, sqState.empty)
         for nx, ny in neighbours:
             if self.getCellState2D(nx,ny) == otherTeam(team):
@@ -124,13 +129,18 @@ class Engine():
         p1, p2 = self.getScores()
         if p1 == 0:
             print("P1 Won")
+            self.winner = sqState.P2
             return True
         if p2 == 0:
             print("P2 Won")
+            self.winner = sqState.P1
             return True
         
+        fullBoard = self.checkFullBoard()
         team1HasMove = self.checkTeamHasLegalMove(sqState.P1)
         team2HasMove = self.checkTeamHasLegalMove(sqState.P2)
+        if fullBoard:
+            return True
         if not team1HasMove:
             print("P1 has no legal moves")
             return True
@@ -138,8 +148,7 @@ class Engine():
             print("P2 has no legal moves")
             return True
 
-        fullBoard = self.checkFullBoard()
-        print(f"{fullBoard = }, {team1HasMove = }, {team2HasMove = }")
+        # print(f"{fullBoard = }, {team1HasMove = }, {team2HasMove = }")
 
 
 
@@ -150,7 +159,7 @@ class Engine():
         for j in range(y):
             for i in range(x):
                 if self.getCellState2D(i,j) == team:
-                    if len(self.findLegalMoves(i,j)) > 0 or len(self.findLegalJumps(i,j)) > 0:
+                    if len(self.findLegalWalks(i,j)) > 0 or len(self.findLegalJumps(i,j)) > 0:
                         return True
         return False
         
